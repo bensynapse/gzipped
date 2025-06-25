@@ -2,8 +2,6 @@
 [![Build Status](https://travis-ci.org/lpar/gzipped.svg?branch=trunk)](https://travis-ci.org/lpar/gzipped)
 [![codecov](https://codecov.io/gh/lpar/gzipped/branch/trunk/graph/badge.svg)](https://codecov.io/gh/lpar/gzipped)
 
-**Note:** Moving to codeberg now that GitHub is going all-in on "AI". See https://codeberg.org/meta/gzipped 
-
 # gzipped.FileServer
 
 Drop-in replacement for golang http.FileServer which supports static content
@@ -17,6 +15,7 @@ content without significant runtime penalty.
 
 Suppose `/var/www/assets/css` contains your style sheets, and you want to make them available as `/css/*.css`:
 
+```go
     package main
     
     import (
@@ -29,16 +28,48 @@ Suppose `/var/www/assets/css` contains your style sheets, and you want to make t
     func main() {
     	log.Fatal(http.ListenAndServe(":8080", http.StripPrefix("/css",
         gzipped.FileServer(gzipped.Dir("/var/www/assets/css")))))
+        // curl localhost:8080/css/styles.css
     }
-    // curl localhost:8080/css/styles.css
-
+```
 
 Using [httprouter](https://github.com/julienschmidt/httprouter)?
 
+```go
     router := httprouter.New()
     router.Handler("GET", "/css/*filepath", 
       gzipped.FileServer(gzipped.Dir("/var/www/assets/css"))))
     log.Fatal(http.ListenAndServe(":8080", router)
+```
+
+An example using `embed` and `fs.FS`:
+
+```go
+package main
+
+import (
+	"embed"
+	"log"
+	"net/http"
+
+	"github.com/lpar/gzipped/v2"
+)
+
+//go:embed public/*
+var public embed.FS
+
+func main() {
+
+	// Serve the embedded public directory as /public/*
+	// fs.FS requires that leading / be removed from the incoming file path
+	http.Handle("/public/",
+		http.StripPrefix("/",
+			gzipped.FileServer(gzipped.FS(public))))
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	// curl localhost:8080/public/somefile.html
+}
+```
 
 ## Change history
 

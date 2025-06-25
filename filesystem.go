@@ -1,6 +1,7 @@
 package gzipped
 
 import (
+	"fmt"
 	fs2 "io/fs"
 	"net/http"
 	"os"
@@ -38,6 +39,7 @@ func (d Dir) Open(name string) (http.File, error) {
 	return http.Dir(d).Open(name)
 }
 
+// FS takes a Go fs.FS and returns a FileSystem suitable for use with FileServer.
 func FS(f fs2.FS) FileSystem {
 	return fs{fs: f}
 }
